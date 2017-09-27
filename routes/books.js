@@ -37,24 +37,24 @@ router.get('/:id', function(req, res, next) {
 })
 
 //POST a new book
-// router.post('/', function(req, res, next) {
-//   console.log(req.body)
-//   console.log('id');
-//   const title = req.body.title
-//   const author = req.body.author
-//   const genre = req.body.author
-//   const description = req.body.description
-//   const cover_url = req.body.cover_url
-//   // const created_at = req.body.created_at
-//   // const updated_at = req.body.updated_at
-//
-//   knex('books')
-//     .insert({title: title, author: author, genre: genre, description: description, cover_url: cover_url})
-//     .then(() => {
-//       res.sendStatus(200)
-//     })
-//     .catch((err) => next(err))
-// })
+router.post('/', function(req, res, next) {
+  console.log(req.body)
+  console.log('id');
+  const title = req.body.title
+  const author = req.body.author
+  const genre = req.body.author
+  const description = req.body.description
+  const cover_url = req.body.cover_url
+  // const created_at = req.body.created_at
+  // const updated_at = req.body.updated_at
+
+  knex('books')
+    .insert({title: title, author: author, genre: genre, description: description, cover_url: cover_url})
+    .then(() => {
+      res.sendStatus(200)
+    })
+    .catch((err) => next(err))
+})
 
 //PATCH an existing book
 router.patch('/:id', function(req, res, next) {
@@ -76,11 +76,40 @@ router.patch('/:id', function(req, res, next) {
       if(rowsAffected !== 1) {
         return res.sendStatus(400)
       }
+      res.setHeader('Content-Type', 'application/json')
       res.sendStatus(200)
     })
     .catch((err) => next(err))
 })
 
 //DELETE an existing book
+router.delete('/:id', function(req, res, next) {
+  const id = req.params.id
+  let book
+
+  console.log(knex('books').where('id', id))
+  knex('books')
+    .del()
+    .where('id', id)
+    .then((rowsAffected) => {
+      if(rowsAffected !== 1) {
+        return res.sendStatus(404)
+      }
+
+      book = rowsAffected
+      console.log(book)
+
+      let responseObj = {
+        title: book.title,
+        author: book.author,
+        genre: book.genre,
+        description: book.description,
+        cover_url: book.cover_url
+      }
+      // res.setHeader('Content-Type', 'application/json')
+      res.send(responseObj)
+    })
+    .catch((err) => next(err))
+})
 
 module.exports = router

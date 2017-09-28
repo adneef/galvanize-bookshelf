@@ -36,48 +36,72 @@ router.get('/:id', function(req, res, next) {
     .catch((err) => next(err))
 })
 
-//POST a new book
+// POST a new book
 router.post('/', function(req, res, next) {
-  console.log(req.body)
-  console.log('id');
   const title = req.body.title
   const author = req.body.author
-  const genre = req.body.author
+  const genre = req.body.genre
   const description = req.body.description
-  const cover_url = req.body.cover_url
-  // const created_at = req.body.created_at
-  // const updated_at = req.body.updated_at
+  const coverUrl = req.body.coverUrl
 
   knex('books')
-    .insert({title: title, author: author, genre: genre, description: description, cover_url: cover_url})
-    .then(() => {
-      res.sendStatus(200)
+    .insert({title: title,
+      author: author,
+      genre: genre,
+      description: description,
+      cover_url: coverUrl},
+      '*')
+    .then((book) => {
+      res.send(humps.camelizeKeys(book[0]))
     })
     .catch((err) => next(err))
 })
 
 //PATCH an existing book
 router.patch('/:id', function(req, res, next) {
-  console.log(req.body)
-  console.log(req.params)
   const id = req.params.id
   const title = req.body.title
   const author = req.body.author
-  const genre = req.body.author
+  const genre = req.body.genre
   const description = req.body.description
-  const cover_url = req.body.cover_url
+  const coverUrl = req.body.coverUrl
   //refactor later with es6 syntax
 
+  let responseObj = {}
+
+  if (id) {
+    responseObj.id = id
+  }
+
+  if (title) {
+    responseObj.title = title
+  }
+
+  if (author) {
+    responseObj.author = author
+  }
+
+  if (genre) {
+    responseObj.genre = genre
+  }
+
+  if (description) {
+    responseObj.description = description
+  }
+
+  if (coverUrl) {
+    responseObj.coverUrl = coverUrl
+  }
+
   knex('books')
-    .update({title: title, author: author, genre: genre, description: description, cover_url: cover_url})
+    .update({title: title, author: author, genre: genre, description: description, cover_url: coverUrl})
     .where('id', id)
     .then((rowsAffected) => {
-      console.log(rowsAffected)
+      // console.log(rowsAffected)
       if(rowsAffected !== 1) {
         return res.sendStatus(400)
       }
-      res.setHeader('Content-Type', 'application/json')
-      res.sendStatus(200)
+      res.send(responseObj)
     })
     .catch((err) => next(err))
 })
@@ -87,27 +111,21 @@ router.delete('/:id', function(req, res, next) {
   const id = req.params.id
   let book
 
-  console.log(knex('books').where('id', id))
   knex('books')
-    .del()
+    .select('title', 'author', 'genre', 'description', 'cover_url')
     .where('id', id)
-    .then((rowsAffected) => {
-      if(rowsAffected !== 1) {
-        return res.sendStatus(404)
-      }
+    .then((bookData) => {
+      book = bookData[0]
+    })
 
-      book = rowsAffected
-      console.log(book)
-
-      let responseObj = {
-        title: book.title,
-        author: book.author,
-        genre: book.genre,
-        description: book.description,
-        cover_url: book.cover_url
-      }
-      // res.setHeader('Content-Type', 'application/json')
-      res.send(responseObj)
+    knex('books')
+      .del()
+      .where('id', id)
+      .then((rowsAffected) => {
+        if(rowsAffected !== 1) {
+          return res.sendStatus(404)
+        }
+      res.send(humps.camelizeKeys(book))
     })
     .catch((err) => next(err))
 })

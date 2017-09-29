@@ -1,5 +1,6 @@
 'use strict';
 
+require('dotenv').load()
 const express = require('express')
 const router = express.Router()
 const knex = require('../knex')
@@ -10,16 +11,33 @@ const secret = process.env.JWT_KEY
 
 //POST to create token
 router.post('/token', function(req, res, next) {
+
   knex('users')
-    .where('email' = req.body.email)
+    .select('*')
+    .where('email', req.body.email)
     .first()
     .then((data) => {
-      let match = bcrypt.compareSync(req.body.password, data.hashed_password)
-       if (!match) {
-         res.cookies.token = jwt.sign({userId: data.id}, secret)
-       }
-    })
+      if(!data) {
+        res.setHeader('Content-Type', 'text/plain')
+        res.status(400)
+        return res.send("Bad email or password")
+      }
 
+      let match = bcrypt.compareSync(req.body.password, data.hashed_password)
+        if (!match) {
+          res.setHeader('Content-Type', 'text/plain')
+          res.status(400)
+          return res.send("Bad email or password")
+        }
+
+       const token = jwt.sign({userId: data.id}, secret)
+
+       res.cookie('token', token,
+       { httpOnly: true })
+       delete data.hashed_password
+       res.send(humps.camelizeKeys(data))
+    })
+    .catch((err) => next(err))
 })
 
 
@@ -32,6 +50,11 @@ router.get('/token', function(req, res, next) {
     }
     res.send(true)
   })
+})
+
+router.delete('/token', function(req, res, next) {
+  res.clearCookie('token')
+  res.sendStatus(200)
 })
 
 module.exports = router

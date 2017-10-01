@@ -1,6 +1,6 @@
 'use strict';
 
-require('dotenv').load()
+// require('dotenv').load()
 const express = require('express')
 const router = express.Router()
 const knex = require('../knex')

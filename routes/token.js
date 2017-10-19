@@ -34,6 +34,7 @@ router.post('/token', function(req, res, next) {
 
        res.cookie('token', token,
        { httpOnly: true })
+       console.log(res.cookie)
        delete data.hashed_password
        res.send(humps.camelizeKeys(data))
     })
@@ -52,9 +53,11 @@ router.get('/token', function(req, res, next) {
   })
 })
 
-router.delete('/token', function(req, res, next) {
+// CLEAR the token and logout
+router.delete('/token', function(req, res) {
   res.clearCookie('token')
   res.sendStatus(200)
+  return
 })
 
 module.exports = router
